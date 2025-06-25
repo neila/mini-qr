@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '')
   // Get BASE_PATH from environment variable, default to '/'
   // Ensure base path ends with slash for proper URL construction
-  let base = env.BASE_PATH || '/'
+  let base = env.BASE_PATH || '/mini-qr/'
   if (base !== '/' && !base.endsWith('/')) {
     base = base + '/'
   }

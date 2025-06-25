@@ -1,0 +1,44 @@
+name: Check build
+
+on:
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    uses: ./.github/workflows/_scan.yml
+
+  build:
+    runs-on: ubuntu-latest
+    needs: ci
+    steps:
+      - uses: actions/checkout@v4
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+          version: 10
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - name: Get pnpm cache directory path
+        id: pnpm-cache-path
+        run: echo "store=$(pnpm store path --silent)" >> $GITHUB_OUTPUT
+      - uses: actions/cache@v4
+        id: pnpm-cache
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ${{ steps.pnpm-cache-path.outputs.store }}
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-
+      - name: Run build
+        run: pnpm build
