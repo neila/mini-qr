@@ -1,3 +1,27 @@
+## v0.26.0 (2025-09-01)
+- ✨ Add csv format guide ([#194](https://github.com/lyqht/mini-qr/pull/194))
+- 🐛 Update links to MiniQR's official website
+- 🔧 Fallback to nimiq/qr-scanner library on Html5Qrcode scanFile error ([#199](https://github.com/lyqht/mini-qr/pull/199))
+- 📝 Add details on how to build without Docker ([#198](https://github.com/lyqht/mini-qr/pull/198))
+
+## v0.25.0 (2025-08-10)
+- ✨ Add custom filename support for batch exports ([#188](https://github.com/lyqht/mini-qr/pull/188))
+- ✨ Add sponsor button in footer ([#182](https://github.com/lyqht/mini-qr/pull/182))
+- 🐛 Improve .env.example base path ([#184](https://github.com/lyqht/mini-qr/pull/184))
+- 🔧 Add post-commit hook for translations ([#191](https://github.com/lyqht/mini-qr/pull/191))
+
+## v0.24.2 (2025-07-01)
+- 🔧 Update german translations ([#179](https://github.com/lyqht/mini-qr/pull/179))
+
+## v0.24.1 (2025-06-23)
+- 🐛 fixes path mismatch in docker-compose.yml ([#177](https://github.com/lyqht/mini-qr/pull/177))
+- 🔧 Accept additional VITE variables as build arguments and set them as environment variables for the build stage ([#173](https://github.com/lyqht/mini-qr/pull/173))
+
+## v0.24.0 (2025-06-21)
+- ✨ Add CC and BCC fields to email template ([#169](https://github.com/lyqht/mini-qr/pull/169))
+- 🐛 persist disabled frame setting ([#174](https://github.com/lyqht/mini-qr/pull/174))
+- 🐛 update changelog
+
 ## v0.23.0 (2025-06-08)
 - ✨ Add environment variables for presets and local storage configuration ([#167](https://github.com/lyqht/mini-qr/pull/167))
 - ✨ add BASE_PATH support for deployment and update environment variables ([#165](https://github.com/lyqht/mini-qr/pull/165))

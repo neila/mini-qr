@@ -11,7 +11,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
-          version: 10
+          version: 8
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -42,7 +42,7 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
-          version: 10
+          version: 8
       - uses: actions/cache@v4
         with:
           path: |
@@ -51,12 +51,15 @@ jobs:
             ${{ github.workspace }}/.next/cache
           key: ${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
       - name: lint & format
-        run: pnpm lint && pnpm format
+        run: pnpm lint && pnpm prettier --ignore-unknown --no-error-on-unmatched-pattern --ignore-path .gitignore --check '!**/*.{css,yml,json,html,md,js,vue}'
       - name: vitest
         run: pnpm vitest
       - name: Playwright tests
         continue-on-error: true
-        run: npx playwright install --with-deps && pnpm test:e2e 
+        run: npx playwright install --with-deps
+      - name: e2e test
+        continue-on-error: true
+        run: pnpm test:e2e 
       - uses: actions/upload-artifact@v4
         if: '!cancelled()'
         with:

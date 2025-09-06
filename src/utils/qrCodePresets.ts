@@ -1,4 +1,5 @@
 import PLACEHOLDER_IMAGE_URL from '@/assets/placeholder_image.png'
+import ETHTokyoConfig from '@/assets/presets/ethtokyo.json'
 import GeeksHackingConfig from '@/assets/presets/geekshacking.json'
 import SpDigitalConfig from '@/assets/presets/spdigital.json'
 import GovtechStackCommunityConfig from '@/assets/presets/govtech_stack.json'
@@ -281,6 +282,13 @@ export const pejuangKodePreset: Preset = {
   style: { borderRadius: '22px', background: '#ffffff' }
 }
 
+export const ethtokyoPreset = {
+  ...defaultPresetOptions,
+  name: 'ETHTokyo',
+  ...ETHTokyoConfig.props,
+  style: ETHTokyoConfig.style
+} as Preset
+
 export const geeksHackingPreset = {
   ...defaultPresetOptions,
   name: 'GeeksHacking',
@@ -330,6 +338,7 @@ export const builtInPresets: Preset[] = [
     vueJsPreset,
     vuei18nPreset,
     pejuangKodePreset,
+    ethtokyoPreset,
     geeksHackingPreset,
     spDigitalPreset,
     govtechStackCommunityPreset,
@@ -350,8 +359,7 @@ function parsePresetsFromEnv(envVal?: string): Preset[] | undefined {
 const envPresets = parsePresetsFromEnv(import.meta.env.VITE_QR_CODE_PRESETS)
 export const allQrCodePresets: Preset[] = envPresets ?? builtInPresets
 
-export const defaultPreset: Preset =
-  import.meta.env.VITE_DEFAULT_PRESET
-    ? allQrCodePresets.find((p) => p.name === import.meta.env.VITE_DEFAULT_PRESET) ??
-      allQrCodePresets[0]
-    : allQrCodePresets[0]
+export const defaultPreset: Preset = import.meta.env.VITE_DEFAULT_PRESET
+  ? (allQrCodePresets.find((p) => p.name === import.meta.env.VITE_DEFAULT_PRESET) ??
+    allQrCodePresets[0])
+  : allQrCodePresets[0]

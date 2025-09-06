@@ -17,6 +17,8 @@ An app to create beautiful QR codes and scan various QR code types.
 
 ## Features
 
+> [Review of 'MiniQR' that makes it easy to create good-looking QR codes](https://gigazine.net/gsc_news/en/20241104-qr-code-generator-miniqr/) - Gigazine, an Osaka based tech news website, one of the top 25 news sites by TIME.com
+
 - ✅ Accessible: minimally WCAG A compliant
 - 🎨 Customizable colors and styles
 - 🖼️ Export to PNG, JPG & SVG
@@ -41,18 +43,18 @@ An app to create beautiful QR codes and scan various QR code types.
 
 1. **Desktop (Chrome/Edge)**:
 
-   - Visit [mini-qr.vercel.app](https://mini-qr.vercel.app)
+   - Visit [MiniQR's website](https://mini-qr-code-generator.vercel.app/)
    - Click the install icon (➕) in the address bar
    - Click "Install" in the prompt
 
 2. **Mobile (Android)**:
 
-   - Visit [mini-qr.vercel.app](https://mini-qr.vercel.app)
+   - Visit [MiniQR's website](https://mini-qr-code-generator.vercel.app/)
    - Tap the "Add to Home Screen" option in your browser menu
    - Tap "Install" or "Add"
 
 3. **iOS (Safari)**:
-   - Visit [mini-qr.vercel.app](https://mini-qr.vercel.app)
+   - Visit [MiniQR's website](https://mini-qr-code-generator.vercel.app/)
    - Tap the Share button
    - Scroll down and tap "Add to Home Screen"
    - Tap "Add"
@@ -63,7 +65,7 @@ Once installed, MiniQR will work offline and provide a native app-like experienc
 
 ## Demo
 
-Try it out [here](https://mini-qr.vercel.app/) ✨
+Try it out [here](https://mini-qr-code-generator.vercel.app/) ✨
 
 <details>
 
@@ -109,11 +111,13 @@ https://github.com/lyqht/mini-qr/assets/35736525/991b2d7e-f168-4354-9091-1678d2c
 
 </details>
 
-## Self-hosting with Docker 🐋
+## Self-hosting
+
+### Self-hosting with Docker 🐋
 
 Mini-QR can easily be self-hosted using Docker. We provide a [docker-compose.yml](docker-compose.yml) file and a production-ready multi-stage [Dockerfile](Dockerfile).
 
-### Quick Start (using prebuilt image)
+Quick Start (using prebuilt image)
 
 ```bash
 wget https://github.com/lyqht/mini-qr/raw/main/docker-compose.yml
@@ -123,7 +127,7 @@ docker compose up -d
 
 This will pull the latest production image from GitHub Container Registry and start the app at [http://localhost:8081](http://localhost:8081).
 
-### Build and run locally (for development or custom builds)
+To build and run locally (for development or custom builds)
 
 ```bash
 docker compose up -d --build
@@ -136,7 +140,29 @@ docker build -t mini-qr .
 docker run -d -p 8081:8080 mini-qr
 ```
 
+### Self-hosting without Docker 🌐
+
+You can also simply compile the application directly using NPM and Vite like follows:
+
+```bash
+git clone https://github.com/lyqht/mini-qr.git
+cd mini-qr
+npm install
+npm run build
+```
+
+From there, the application will be build into `dist` folder and this folder can simply be hosted from any kind of web server.
+
+An example using PHP's built-in web server:
+
+```bash
+cd dist
+php -S localhost:8080
+```
+
 ### Customization
+
+An example of a self-hosted website with a modified MiniQR app with specific language and preset: https://qrcode.outils.restosducoeur.org/
 
 #### Environment Variables
 
@@ -202,19 +228,27 @@ Thank you for everyone here for taking their time out to improve MiniQR 🧡
   <tbody>
     <tr>
       <td align="center" valign="top" width="16.66%"><a href="https://github.com/tenekev"><img src="https://avatars.githubusercontent.com/u/30023563?v=4?s=48" width="48px;" alt="tenekev"/><br /><sub><b>tenekev</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=tenekev" title="Code">💻</a> <a href="https://github.com/lyqht/mini-qr/commits?author=tenekev" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/tecking"><img src="https://avatars.githubusercontent.com/u/479934?v=4?s=48" width="48px;" alt="tecking"/><br /><sub><b>tecking</b></sub></a><br /><a href="#translation-tecking" title="Translation">🌍</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/pcbimon"><img src="https://avatars.githubusercontent.com/u/8252967?v=4?s=48" width="48px;" alt="Patipat Chewprecha"/><br /><sub><b>Patipat Chewprecha</b></sub></a><br /><a href="#translation-pcbimon" title="Translation">🌍</a> <a href="https://github.com/lyqht/mini-qr/commits?author=pcbimon" title="Code">💻</a> <a href="https://github.com/lyqht/mini-qr/commits?author=pcbimon" title="Documentation">📖</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/ssrahul96"><img src="https://avatars.githubusercontent.com/u/15570570?v=4?s=48" width="48px;" alt="Rahul Somasundaram"/><br /><sub><b>Rahul Somasundaram</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=ssrahul96" title="Code">💻</a></td>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/itsAnuga"><img src="https://avatars.githubusercontent.com/u/828450?v=4?s=48" width="48px;" alt="Johan Ekström"/><br /><sub><b>Johan Ekström</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=itsAnuga" title="Code">💻</a></td>
       <td align="center" valign="top" width="16.66%"><a href="https://zainf.dev/"><img src="https://avatars.githubusercontent.com/u/6315466?v=4?s=48" width="48px;" alt="Zain Fathoni"/><br /><sub><b>Zain Fathoni</b></sub></a><br /><a href="#design-zainfathoni" title="Design">🎨</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/katullo11"><img src="https://avatars.githubusercontent.com/u/129339155?v=4?s=48" width="48px;" alt="Francesco"/><br /><sub><b>Francesco</b></sub></a><br /><a href="#translation-katullo11" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/ssrahul96"><img src="https://avatars.githubusercontent.com/u/15570570?v=4?s=48" width="48px;" alt="Rahul Somasundaram"/><br /><sub><b>Rahul Somasundaram</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=ssrahul96" title="Code">💻</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/tecking"><img src="https://avatars.githubusercontent.com/u/479934?v=4?s=48" width="48px;" alt="tecking"/><br /><sub><b>tecking</b></sub></a><br /><a href="#translation-tecking" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/davidxhk"><img src="https://avatars.githubusercontent.com/u/37938921?v=4?s=48" width="48px;" alt="David Xie"/><br /><sub><b>David Xie</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=davidxhk" title="Code">💻</a></td>
     </tr>
     <tr>
-      <td align="center" valign="top" width="16.66%"><a href="https://github.com/katullo11"><img src="https://avatars.githubusercontent.com/u/129339155?v=4?s=48" width="48px;" alt="Francesco"/><br /><sub><b>Francesco</b></sub></a><br /><a href="#translation-katullo11" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/pcbimon"><img src="https://avatars.githubusercontent.com/u/8252967?v=4?s=48" width="48px;" alt="Patipat Chewprecha"/><br /><sub><b>Patipat Chewprecha</b></sub></a><br /><a href="#translation-pcbimon" title="Translation">🌍</a> <a href="https://github.com/lyqht/mini-qr/commits?author=pcbimon" title="Code">💻</a> <a href="https://github.com/lyqht/mini-qr/commits?author=pcbimon" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/itsAnuga"><img src="https://avatars.githubusercontent.com/u/828450?v=4?s=48" width="48px;" alt="Johan Ekström"/><br /><sub><b>Johan Ekström</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=itsAnuga" title="Code">💻</a></td>
       <td align="center" valign="top" width="16.66%"><a href="https://furycode.org/"><img src="https://avatars.githubusercontent.com/u/22378039?v=4?s=48" width="48px;" alt="Klemens Graf"/><br /><sub><b>Klemens Graf</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=klemensgraf" title="Code">💻</a></td>
       <td align="center" valign="top" width="16.66%"><a href="https://github.com/unililium"><img src="https://avatars.githubusercontent.com/u/3117172?v=4?s=48" width="48px;" alt="林都"/><br /><sub><b>林都</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=unililium" title="Code">💻</a> <a href="#translation-unililium" title="Translation">🌍</a></td>
       <td align="center" valign="top" width="16.66%"><a href="https://github.com/seals187"><img src="https://avatars.githubusercontent.com/u/86856086?v=4?s=48" width="48px;" alt="seals187"/><br /><sub><b>seals187</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/pulls?q=is%3Apr+reviewed-by%3Aseals187" title="Reviewed Pull Requests">👀</a></td>
       <td align="center" valign="top" width="16.66%"><a href="https://github.com/olvier"><img src="https://avatars.githubusercontent.com/u/13106409?v=4?s=48" width="48px;" alt="olvier"/><br /><sub><b>olvier</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/pulls?q=is%3Apr+reviewed-by%3Aolvier" title="Reviewed Pull Requests">👀</a></td>
+    </tr>
+    <tr>
       <td align="center" valign="top" width="16.66%"><a href="https://github.com/matthewberryman"><img src="https://avatars.githubusercontent.com/u/2288238?v=4?s=48" width="48px;" alt="Matthew Berryman"/><br /><sub><b>Matthew Berryman</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=matthewberryman" title="Code">💻</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/Mr-Robot-ops"><img src="https://avatars.githubusercontent.com/u/55334802?v=4?s=48" width="48px;" alt="Mr-robot-ops"/><br /><sub><b>Mr-robot-ops</b></sub></a><br /><a href="#translation-Mr-Robot-ops" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/danktankk"><img src="https://avatars.githubusercontent.com/u/34148516?v=4?s=48" width="48px;" alt="danktankk"/><br /><sub><b>danktankk</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=danktankk" title="Code">💻</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/clausjs"><img src="https://avatars.githubusercontent.com/u/12068849?v=4?s=48" width="48px;" alt="Joseph Claus"/><br /><sub><b>Joseph Claus</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=clausjs" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/kennydude"><img src="https://avatars.githubusercontent.com/u/198294?v=4?s=48" width="48px;" alt="Joe Simpson"/><br /><sub><b>Joe Simpson</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=kennydude" title="Documentation">📖</a></td>
+      <td align="center" valign="top" width="16.66%"><a href="https://github.com/toha-tiger"><img src="https://avatars.githubusercontent.com/u/8455781?v=4?s=48" width="48px;" alt="toha-tiger"/><br /><sub><b>toha-tiger</b></sub></a><br /><a href="https://github.com/lyqht/mini-qr/commits?author=toha-tiger" title="Code">💻</a> <a href="#design-toha-tiger" title="Design">🎨</a></td>
     </tr>
   </tbody>
   <tfoot>
