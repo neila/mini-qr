@@ -1,9 +1,10 @@
 import PLACEHOLDER_IMAGE_URL from '@/assets/placeholder_image.png'
 import ETHTokyoConfig from '@/assets/presets/ethtokyo.json'
-import GeeksHackingConfig from '@/assets/presets/geekshacking.json'
-import SpDigitalConfig from '@/assets/presets/spdigital.json'
-import GovtechStackCommunityConfig from '@/assets/presets/govtech_stack.json'
-import Hackomania2025Config from '@/assets/presets/hackomania2025.json'
+import UnchainConfig from '@/assets/presets/unchain.json'
+// import GeeksHackingConfig from '@/assets/presets/geekshacking.json'
+// import SpDigitalConfig from '@/assets/presets/spdigital.json'
+// import GovtechStackCommunityConfig from '@/assets/presets/govtech_stack.json'
+// import Hackomania2025Config from '@/assets/presets/hackomania2025.json'
 import PlainConfig from '@/assets/presets/plain.json'
 import type { DrawType, Options as StyledQRCodeProps } from 'qr-code-styling'
 
@@ -289,26 +290,40 @@ export const ethtokyoPreset = {
   style: ETHTokyoConfig.style
 } as Preset
 
-export const geeksHackingPreset = {
+export const unchainPreset = {
   ...defaultPresetOptions,
-  name: 'GeeksHacking',
-  ...GeeksHackingConfig.props,
-  style: GeeksHackingConfig.style
+  name: 'UNCHAIN',
+  ...UnchainConfig.props,
+  style: UnchainConfig.style
 } as Preset
 
-export const spDigitalPreset = {
-  ...defaultPresetOptions,
-  name: 'SP Digital',
-  ...SpDigitalConfig.props,
-  style: SpDigitalConfig.style
-} as Preset
+// export const geeksHackingPreset = {
+//   ...defaultPresetOptions,
+//   name: 'GeeksHacking',
+//   ...GeeksHackingConfig.props,
+//   style: GeeksHackingConfig.style
+// } as Preset
 
-export const govtechStackCommunityPreset = {
-  ...defaultPresetOptions,
-  name: 'GovTech - Stack Community',
-  ...GovtechStackCommunityConfig.props,
-  style: GovtechStackCommunityConfig.style
-} as Preset
+// export const spDigitalPreset = {
+//   ...defaultPresetOptions,
+//   name: 'SP Digital',
+//   ...SpDigitalConfig.props,
+//   style: SpDigitalConfig.style
+// } as Preset
+
+// export const govtechStackCommunityPreset = {
+//   ...defaultPresetOptions,
+//   name: 'GovTech - Stack Community',
+//   ...GovtechStackCommunityConfig.props,
+//   style: GovtechStackCommunityConfig.style
+// } as Preset
+
+// export const hackomania2025Preset = {
+//   ...defaultPresetOptions,
+//   name: 'Hackomania 2025',
+//   ...Hackomania2025Config.props,
+//   style: Hackomania2025Config.style
+// } as Preset
 
 export const plainPreset = {
   ...defaultPresetOptions,
@@ -317,32 +332,26 @@ export const plainPreset = {
   style: PlainConfig.style
 } as Preset
 
-export const hackomania2025Preset = {
-  ...defaultPresetOptions,
-  name: 'Hackomania 2025',
-  ...Hackomania2025Config.props,
-  style: Hackomania2025Config.style
-} as Preset
-
 export const builtInPresets: Preset[] = [
-  lyqhtPreset,
+  // lyqhtPreset,
   plainPreset,
   ...[
-    padletPreset,
-    uiliciousPreset,
-    supabaseGreenPreset,
-    supabasePurplePreset,
-    vercelLightPreset,
-    vercelDarkPreset,
-    viteConf2023Preset,
-    vueJsPreset,
-    vuei18nPreset,
-    pejuangKodePreset,
+    // padletPreset,
+    // uiliciousPreset,
+    // supabaseGreenPreset,
+    // supabasePurplePreset,
+    // vercelLightPreset,
+    // vercelDarkPreset,
+    // viteConf2023Preset,
+    // vueJsPreset,
+    // vuei18nPreset,
+    // pejuangKodePreset,
     ethtokyoPreset,
-    geeksHackingPreset,
-    spDigitalPreset,
-    govtechStackCommunityPreset,
-    hackomania2025Preset
+    unchainPreset
+    // geeksHackingPreset,
+    // spDigitalPreset,
+    // govtechStackCommunityPreset,
+    // hackomania2025Preset
   ].sort((a, b) => a.name.localeCompare(b.name))
 ]
 
