@@ -11,8 +11,15 @@ import {
   AccordionTrigger
 } from '@/components/ui/accordion'
 import { Combobox } from '@/components/ui/Combobox'
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger
+} from '@/components/ui/drawer'
 import VCardPreview from '@/components/VCardPreview.vue'
+import { IS_COPY_IMAGE_TO_CLIPBOARD_SUPPORTED } from '@/utils/clipboard'
 import { createRandomColor, getRandomItemInArray } from '@/utils/color'
 import {
   copyImageToClipboard,
@@ -23,12 +30,11 @@ import {
   getPngElement,
   getSvgString
 } from '@/utils/convertToImage'
-import { IS_COPY_IMAGE_TO_CLIPBOARD_SUPPORTED } from '@/utils/clipboard'
-import { parseCSV, validateCSVData } from '@/utils/csv'
-import { processCsvDataForBatch, generateBatchExportFilename } from '@/utils/csvBatchProcessing'
+import { parseCSV, validateCSVData, type CSVParsingResult } from '@/utils/csv'
+import { generateBatchExportFilename, processCsvDataForBatch } from '@/utils/csvBatchProcessing'
 import { getNumericCSSValue } from '@/utils/formatting'
-import { allQrCodePresets, defaultPreset, type Preset } from '@/utils/qrCodePresets'
 import { allFramePresets, defaultFramePreset, type FramePreset } from '@/utils/framePresets'
+import { allQrCodePresets, defaultPreset, type Preset } from '@/utils/qrCodePresets'
 import { useMediaQuery } from '@vueuse/core'
 import JSZip from 'jszip'
 import {
@@ -38,7 +44,7 @@ import {
   type ErrorCorrectionLevel,
   type Options as StyledQRCodeProps
 } from 'qr-code-styling'
-import { computed, onMounted, ref, watch, nextTick } from 'vue'
+import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import 'vue-i18n'
 import { useI18n } from 'vue-i18n'
 
@@ -62,12 +68,15 @@ const isLikelyMobileDevice = computed(() => {
 })
 
 //#region /** locale */
-const { t } = useI18n()
+const { t, locale } = useI18n()
 //#endregion
 
 //#region /* QR code style settings */
 const data = ref(props.initialData || import.meta.env.VITE_DEFAULT_DATA_TO_ENCODE || '')
 const debouncedData = ref(data.value)
+const previewData = computed(() =>
+  debouncedData.value?.length > 0 ? debouncedData.value : defaultQRCodeText.value
+)
 let dataDebounceTimer: ReturnType<typeof setTimeout>
 
 watch(
@@ -145,7 +154,7 @@ const qrOptions = computed(() => ({
 }))
 
 const qrCodeProps = computed<StyledQRCodeProps>(() => ({
-  data: debouncedData.value || 'Have a beautiful day!',
+  data: previewData.value,
   image: image.value,
   width: width.value,
   height: height.value,
@@ -215,10 +224,8 @@ const selectedPreset = ref<
   Preset & { key?: string; qrOptions?: { errorCorrectionLevel: ErrorCorrectionLevel } }
 >(defaultPreset)
 watch(selectedPreset, () => {
-  // Only update data from preset if there's no initialData or if data is empty
-  if (!props.initialData || data.value === '') {
-    data.value = selectedPreset.value.data
-  }
+  // Note: We no longer auto-fill data from presets. Users can keep their own data
+  // while changing the visual style. The QR preview will show default text if empty.
 
   image.value = selectedPreset.value.image
   width.value = selectedPreset.value.width
@@ -298,11 +305,15 @@ const recommendedErrorCorrectionLevel = computed<ErrorCorrectionLevel | null>(()
 })
 //#endregion
 
-//#region /* Frame settings */
-const DEFAULT_FRAME_TEXT = 'Scan for more info'
-const frameText = ref(DEFAULT_FRAME_TEXT)
+//#region /* Frame settings */ Start empty, default is set intelligently */
+const defaultFrameText = computed(() => t('Scan for more info'))
+const frameText = ref<string>('')
 const frameTextPosition = ref<'top' | 'bottom' | 'left' | 'right'>('bottom')
 const showFrame = ref(false)
+
+//#region /* Default QR code text */
+const defaultQRCodeText = computed(() => t('Have nice day!'))
+
 const frameStyle = ref<FrameStyle>({
   textColor: '#000000',
   backgroundColor: '#ffffff',
@@ -311,18 +322,21 @@ const frameStyle = ref<FrameStyle>({
   borderRadius: '8px',
   padding: '16px'
 })
+
 const selectedFramePresetKey = ref<string>(defaultFramePreset.name)
 const lastCustomLoadedFramePreset = ref<FramePreset>()
 const CUSTOM_LOADED_FRAME_PRESET_KEYS = [
   LAST_LOADED_LOCALLY_PRESET_KEY,
   LOADED_FROM_FILE_PRESET_KEY
 ]
+
 const allFramePresetOptions = computed(() => {
   const options = lastCustomLoadedFramePreset.value
     ? [lastCustomLoadedFramePreset.value, ...allFramePresets]
     : allFramePresets
   return options.map((preset) => ({ value: preset.name, label: t(preset.name) }))
 })
+
 function applyFramePreset(preset: FramePreset) {
   if (preset.style) {
     frameStyle.value = { ...frameStyle.value, ...preset.style }
@@ -330,6 +344,7 @@ function applyFramePreset(preset: FramePreset) {
   if (preset.text) frameText.value = preset.text
   if (preset.position) frameTextPosition.value = preset.position
 }
+
 watch(
   selectedFramePresetKey,
   (newKey, prevKey) => {
@@ -351,11 +366,55 @@ watch(
   },
   { immediate: true }
 )
+
 const frameSettings = computed(() => ({
   text: frameText.value,
   position: frameTextPosition.value,
   style: frameStyle.value
 }))
+//#endregion
+
+//#region /* Frame text autofill */ Fill if empty */
+watch(locale, () => {
+  if (frameText.value.trim() === '') {
+    frameText.value = defaultFrameText.value
+  }
+})
+
+watch(defaultFrameText, (now, prev) => {
+  const untouched = frameText.value.trim() === '' || frameText.value === prev
+  if (untouched) {
+    frameText.value = now
+  }
+})
+
+watch(showFrame, (on) => {
+  if (on && frameText.value.trim() === '') {
+    frameText.value = defaultFrameText.value
+  }
+})
+
+onMounted(() => {
+  if (frameText.value.trim() === '') {
+    frameText.value = defaultFrameText.value
+  }
+})
+//#endregion
+
+//#region /* QR code text autofill -  Fill if empty */
+watch(locale, () => {
+  if (!props.initialData && data.value.trim() === '') {
+    data.value = defaultQRCodeText.value
+  }
+})
+
+watch(defaultQRCodeText, (now, prev) => {
+  const untouched = !props.initialData && (data.value.trim() === '' || data.value === prev)
+  if (untouched) {
+    data.value = now
+  }
+})
+
 //#endregion
 
 //#region /* General Export - download qr code and copy to clipboard */
@@ -450,10 +509,17 @@ function copyQRToClipboard() {
  */
 function downloadQRImage(format: 'png' | 'svg' | 'jpg') {
   if (exportMode.value === ExportMode.Single) {
+    // Sanitize filename to remove invalid characters
+    const sanitizedFilename = (exportFilename.value || 'qr-code').replace(/[^a-zA-Z0-9_-]/g, '_')
+
     const formatConfig = {
-      png: { fn: downloadPngElement, filename: 'qr-code.png' },
-      svg: { fn: downloadSvgElement, filename: 'qr-code.svg' },
-      jpg: { fn: downloadJpgElement, filename: 'qr-code.jpg', extraOptions: { bgcolor: 'white' } }
+      png: { fn: downloadPngElement, filename: `${sanitizedFilename}.png` },
+      svg: { fn: downloadSvgElement, filename: `${sanitizedFilename}.svg` },
+      jpg: {
+        fn: downloadJpgElement,
+        filename: `${sanitizedFilename}.jpg`,
+        extraOptions: { bgcolor: 'white' }
+      }
     }[format]
 
     const el = document.getElementById('element-to-export')
@@ -538,7 +604,7 @@ function loadQRConfig(jsonString: string, key?: string) {
 
   if (frameConfig) {
     showFrame.value = true
-    frameText.value = frameConfig.text || DEFAULT_FRAME_TEXT
+    frameText.value = frameConfig.text || defaultFrameText.value
     frameTextPosition.value = frameConfig.position || 'bottom'
     frameStyle.value = {
       ...frameStyle.value,
@@ -606,6 +672,8 @@ onMounted(() => {
   // Set initial data if provided through props
   if (props.initialData) {
     data.value = props.initialData
+  } else if (data.value.trim() === '') {
+    data.value = defaultQRCodeText.value
   }
 })
 //#endregion
@@ -616,6 +684,7 @@ enum ExportMode {
   Batch = 'batch'
 }
 
+const exportFilename = ref('qr-code')
 const exportMode = ref(ExportMode.Single)
 const dataStringsFromCsv = ref<string[]>([])
 const frameTextsFromCsv = ref<string[]>([])
@@ -629,15 +698,15 @@ const isExportingBatchQRs = ref(false)
 const isBatchExportSuccess = ref(false)
 const currentExportedQrCodeIndex = ref<number | null>(null)
 
-const parsedCsvResult = ref<{ data: any[] } | null>(null)
+const parsedCsvResult = ref<{ data: CSVParsingResult } | null>(null)
 const previewRowIndex = ref(0)
 const previewRow = computed(() => {
   const idx = previewRowIndex.value
   if (dataStringsFromCsv.value.length === 0) return null
   if (idx < 0 || idx >= dataStringsFromCsv.value.length) return null
   if (
-    parsedCsvResult.value &&
-    parsedCsvResult.value.data &&
+    parsedCsvResult.value?.data &&
+    Array.isArray(parsedCsvResult.value.data) &&
     parsedCsvResult.value.data.length > idx
   ) {
     return parsedCsvResult.value.data[idx]
@@ -664,6 +733,18 @@ const resetData = () => {
 
 watch(exportMode, () => {
   resetData()
+})
+
+watch(previewRowIndex, (newIndex) => {
+  if (
+    exportMode.value === ExportMode.Batch &&
+    dataStringsFromCsv.value.length > 0 &&
+    newIndex >= 0 &&
+    newIndex < dataStringsFromCsv.value.length
+  ) {
+    data.value = dataStringsFromCsv.value[newIndex]
+    frameText.value = frameTextsFromCsv.value[newIndex] || defaultFrameText.value
+  }
 })
 
 const getFileFromInputEvent = (event: InputEvent) => {
@@ -717,6 +798,12 @@ const onBatchInputFileUpload = (event: Event) => {
     showFrame.value = batchResult.hasCustomFrameText
     isValidCsv.value = true
     previewRowIndex.value = 0 // Reset preview to first row on new upload
+
+    // Update the QR code preview with the first row's data
+    if (batchResult.urls.length > 0) {
+      data.value = batchResult.urls[0]
+      frameText.value = batchResult.frameTexts[0] || defaultFrameText.value
+    }
   }
 
   reader.readAsText(file)
@@ -724,7 +811,7 @@ const onBatchInputFileUpload = (event: Event) => {
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-const usedFilenames = new Set() // zip folders cannot have duplicate filenames, otherwise they override each other
+const usedFilenames = new Set<string>()
 const createZipFile = (
   zip: typeof JSZip,
   dataUrl: string,
@@ -735,7 +822,6 @@ const createZipFile = (
   const frameText = frameTextsFromCsv.value[index]
   const customFileName = fileNamesFromCsv.value[index]
 
-  // Generate filename using the utility function
   const fileName = generateBatchExportFilename(
     dataString,
     frameText,
@@ -818,54 +904,11 @@ const updateDataFromModal = (newData: string) => {
   // Optionally trigger QR code regeneration here if needed
 }
 // #endregion
-
-//#region /* Dynamic padding for mobile drawer */
-const drawerTriggerHeight = ref(0)
-const BUFFER_PADDING = 20 // Extra space below the drawer trigger
-
-function updateDrawerTriggerHeight() {
-  nextTick(() => {
-    const el = document.getElementById('drawer-preview-container')
-    if (el) {
-      drawerTriggerHeight.value = el.offsetHeight
-    } else {
-      drawerTriggerHeight.value = 0 // Fallback if element not found
-    }
-  })
-}
-
-watch(
-  isLarge,
-  (newIsLarge) => {
-    if (!newIsLarge) {
-      updateDrawerTriggerHeight() // Drawer is now visible
-    } else {
-      drawerTriggerHeight.value = 0 // Drawer is hidden, reset padding effect
-    }
-  },
-  { immediate: true } // Run on initial load
-)
-
-// Watch for changes that might affect the drawer trigger's height
-watch(showFrame, () => {
-  if (!isLarge.value) {
-    updateDrawerTriggerHeight()
-  }
-})
-
-const mainDivPaddingStyle = computed(() => {
-  if (!isLarge.value && drawerTriggerHeight.value > 0) {
-    return { paddingBottom: `${drawerTriggerHeight.value + BUFFER_PADDING}px` }
-  }
-  return { paddingBottom: '0px' } // Default for large screens or if height is 0
-})
-//#endregion
 </script>
 
 <template>
   <div
-    class="flex items-start justify-center gap-4 md:flex-row md:gap-6 lg:gap-12 lg:pb-0"
-    :style="mainDivPaddingStyle"
+    class="flex items-start justify-center gap-4 overflow-x-hidden md:flex-row md:gap-6 lg:gap-12 lg:pb-0"
   >
     <!-- Sticky sidebar on large screens -->
     <div
@@ -906,7 +949,6 @@ const mainDivPaddingStyle = computed(() => {
                       <StyledQRCode
                         v-bind="{
                           ...qrCodeProps,
-                          data: data?.length > 0 ? data : t('Have nice day!'),
                           width: PREVIEW_QRCODE_DIM_UNIT,
                           height: PREVIEW_QRCODE_DIM_UNIT
                         }"
@@ -932,7 +974,6 @@ const mainDivPaddingStyle = computed(() => {
                     <StyledQRCode
                       v-bind="{
                         ...qrCodeProps,
-                        data: data?.length > 0 ? data : t('Have nice day!'),
                         width: PREVIEW_QRCODE_DIM_UNIT,
                         height: PREVIEW_QRCODE_DIM_UNIT
                       }"
@@ -969,9 +1010,11 @@ const mainDivPaddingStyle = computed(() => {
           </div>
         </div>
       </DrawerTrigger>
-      <DrawerContent class="flex h-screen flex-col items-center justify-between">
-        <div class="flex grow flex-col items-center justify-center gap-4">
-          <DrawerTitle>{{ t('Export') }}</DrawerTitle>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>{{ t('Export QR code') }}</DrawerTitle>
+        </DrawerHeader>
+        <div class="overflow-y-auto overflow-x-hidden px-4 pb-4">
           <div ref="mainContentContainer" id="main-content-container" class="w-full"></div>
         </div>
       </DrawerContent>
@@ -1008,7 +1051,6 @@ const mainDivPaddingStyle = computed(() => {
                     <StyledQRCode
                       v-bind="{
                         ...qrCodeProps,
-                        data: data?.length > 0 ? data : t('Have nice day!'),
                         width: PREVIEW_QRCODE_DIM_UNIT,
                         height: PREVIEW_QRCODE_DIM_UNIT
                       }"
@@ -1121,109 +1163,140 @@ const mainDivPaddingStyle = computed(() => {
               <p>{{ t('Load QR Code configuration') }}</p>
             </button>
           </div>
-          <div id="export-options" class="grid place-items-center gap-4">
-            <p class="text-zinc-900 dark:text-zinc-100">{{ t('Export as') }}</p>
-            <div class="flex flex-row items-center justify-center gap-2">
-              <button
-                id="download-qr-image-button-png"
-                class="button"
-                @click="() => downloadQRImage('png')"
-                :disabled="isExportButtonDisabled"
-                :title="
-                  isExportButtonDisabled
-                    ? t('Please enter data to encode first')
-                    : t('Download QR Code as PNG')
-                "
-                :aria-label="t('Download QR Code as PNG')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
-                    <text
-                      x="1"
-                      y="22"
-                      fill="currentColor"
-                      stroke="none"
-                      font-size="11px"
-                      font-family="monospace"
-                      font-weight="600"
-                    >
-                      PNG
-                    </text>
-                  </g>
-                </svg>
-              </button>
-              <button
-                id="download-qr-image-button-jpg"
-                class="button"
-                @click="() => downloadQRImage('jpg')"
-                :disabled="isExportButtonDisabled"
-                :title="
-                  isExportButtonDisabled
-                    ? t('Please enter data to encode first')
-                    : t('Download QR Code as JPG')
-                "
-                :aria-label="t('Download QR Code as JPG')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
-                    <text
-                      x="1"
-                      y="22"
-                      fill="currentColor"
-                      stroke="none"
-                      font-size="11px"
-                      font-family="monospace"
-                      font-weight="600"
-                    >
-                      JPG
-                    </text>
-                  </g>
-                </svg>
-              </button>
-              <button
-                id="download-qr-image-button-svg"
-                class="button"
-                @click="() => downloadQRImage('svg')"
-                :disabled="isExportButtonDisabled"
-                :title="
-                  isExportButtonDisabled
-                    ? t('Please enter data to encode first')
-                    : t('Download QR Code as SVG')
-                "
-                :aria-label="t('Download QR Code as SVG')"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-                  <g fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
-                    <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
-                    <text
-                      x="1"
-                      y="22"
-                      fill="currentColor"
-                      stroke="none"
-                      font-size="11px"
-                      font-family="monospace"
-                      font-weight="600"
-                    >
-                      SVG
-                    </text>
-                  </g>
-                </svg>
-              </button>
+          <section
+            id="export-options"
+            class="flex flex-col gap-4 rounded-lg border border-zinc-300 p-4 dark:border-zinc-700"
+          >
+            <h2
+              class="mx-auto -mt-[30px] bg-white px-4 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100"
+            >
+              {{ t('Export QR code') }}
+            </h2>
+            <div class="grid place-items-center gap-4">
+              <div v-if="exportMode === ExportMode.Single" class="flex w-full flex-col gap-2">
+                <label for="export-filename" class="label">{{ t('File name') }}</label>
+                <input
+                  id="export-filename"
+                  type="text"
+                  class="text-input"
+                  v-model="exportFilename"
+                />
+              </div>
+              <div class="flex flex-row items-center justify-center gap-2">
+                <button
+                  id="download-qr-image-button-png"
+                  class="button"
+                  @click="() => downloadQRImage('png')"
+                  :disabled="isExportButtonDisabled"
+                  :title="
+                    isExportButtonDisabled
+                      ? t('Please enter data to encode first')
+                      : t('Download QR Code as PNG')
+                  "
+                  :aria-label="t('Download QR Code as PNG')"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                  >
+                    <g fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                      <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
+                      <text
+                        x="1"
+                        y="22"
+                        fill="currentColor"
+                        stroke="none"
+                        font-size="11px"
+                        font-family="monospace"
+                        font-weight="600"
+                      >
+                        PNG
+                      </text>
+                    </g>
+                  </svg>
+                </button>
+                <button
+                  id="download-qr-image-button-jpg"
+                  class="button"
+                  @click="() => downloadQRImage('jpg')"
+                  :disabled="isExportButtonDisabled"
+                  :title="
+                    isExportButtonDisabled
+                      ? t('Please enter data to encode first')
+                      : t('Download QR Code as JPG')
+                  "
+                  :aria-label="t('Download QR Code as JPG')"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                  >
+                    <g fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                      <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
+                      <text
+                        x="1"
+                        y="22"
+                        fill="currentColor"
+                        stroke="none"
+                        font-size="11px"
+                        font-family="monospace"
+                        font-weight="600"
+                      >
+                        JPG
+                      </text>
+                    </g>
+                  </svg>
+                </button>
+                <button
+                  id="download-qr-image-button-svg"
+                  class="button"
+                  @click="() => downloadQRImage('svg')"
+                  :disabled="isExportButtonDisabled"
+                  :title="
+                    isExportButtonDisabled
+                      ? t('Please enter data to encode first')
+                      : t('Download QR Code as SVG')
+                  "
+                  :aria-label="t('Download QR Code as SVG')"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                  >
+                    <g fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+                      <path d="M5 12V5a2 2 0 0 1 2-2h7l5 5v4" />
+                      <text
+                        x="1"
+                        y="22"
+                        fill="currentColor"
+                        stroke="none"
+                        font-size="11px"
+                        font-family="monospace"
+                        font-weight="600"
+                      >
+                        SVG
+                      </text>
+                    </g>
+                  </svg>
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         </div>
       </div>
     </Teleport>
 
-    <div
-      id="settings"
-      class="flex w-full grow flex-col items-start gap-8 overflow-hidden text-start"
-    >
+    <section id="settings" class="flex w-full grow flex-col items-start gap-8 text-start">
+      <h2 class="sr-only">{{ t('Settings to customize your QR code') }}</h2>
       <Accordion
         type="multiple"
         collapsible
@@ -1243,7 +1316,7 @@ const mainDivPaddingStyle = computed(() => {
             ></AccordionTrigger
           >
           <AccordionContent class="px-2 pb-8 pt-4">
-            <section class="space-y-4" aria-labelledby="frame-settings-title">
+            <section class="w-full space-y-4" aria-labelledby="frame-settings-title">
               <div class="flex flex-row items-center gap-2">
                 <label for="show-frame">{{ t('Add frame') }}</label>
                 <input id="show-frame" type="checkbox" v-model="showFrame" />
@@ -1262,7 +1335,7 @@ const mainDivPaddingStyle = computed(() => {
                 </div>
                 <div class="flex flex-col">
                   <label class="mb-2 block">{{ t('Text position') }}</label>
-                  <fieldset class="flex-1" role="radio" tabindex="0">
+                  <fieldset class="flex-1">
                     <div
                       class="radio"
                       v-for="position in ['top', 'bottom', 'right', 'left']"
@@ -1278,7 +1351,6 @@ const mainDivPaddingStyle = computed(() => {
                     </div>
                   </fieldset>
                 </div>
-
                 <div>
                   <div class="mb-2 flex flex-row items-center gap-2">
                     <label for="frame-text">{{ t('Frame text') }}</label>
@@ -1288,11 +1360,10 @@ const mainDivPaddingStyle = computed(() => {
                     class="text-input"
                     id="frame-text"
                     rows="2"
-                    :placeholder="t('Scan for more info')"
+                    :placeholder="defaultFrameText"
                     v-model="frameText"
                   />
                 </div>
-
                 <div>
                   <label class="mb-2 block">{{ t('Frame style') }}</label>
                   <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -1377,7 +1448,7 @@ const mainDivPaddingStyle = computed(() => {
             ><span id="qr-code-settings-title">{{ t('QR code settings') }}</span></AccordionTrigger
           >
           <AccordionContent class="px-2 pb-8 pt-4">
-            <section class="space-y-8" aria-labelledby="qr-code-settings-title">
+            <section class="w-full space-y-4" aria-labelledby="qr-code-settings-title">
               <div>
                 <label>{{ t('Preset') }}</label>
                 <div class="flex flex-row items-center justify-start gap-2">
@@ -1407,10 +1478,10 @@ const mainDivPaddingStyle = computed(() => {
                   </button>
                 </div>
               </div>
-              <div class="w-full overflow-hidden">
+              <div class="w-full">
                 <div class="flex w-full flex-col flex-wrap gap-4 sm:flex-row sm:gap-x-8">
                   <!-- Data to encode area -->
-                  <div class="w-full overflow-hidden sm:grow">
+                  <div class="w-full sm:grow">
                     <!-- Header row: Label + Mode Toggles + Batch Options -->
                     <div class="mb-2 flex items-center gap-4">
                       <label for="data">{{ t('Data to encode') }}</label>
@@ -1449,7 +1520,7 @@ const mainDivPaddingStyle = computed(() => {
                       <textarea
                         id="data"
                         v-model="data"
-                        class="mr-2 grow text-input"
+                        class="me-2 grow text-input"
                         :placeholder="t('data to encode e.g. a URL or a string')"
                       ></textarea>
                       <button
@@ -1536,7 +1607,7 @@ const mainDivPaddingStyle = computed(() => {
                                   <div class="flex flex-col gap-1">
                                     <span
                                       class="text-xs font-medium text-gray-500 dark:text-gray-400"
-                                      >{{ $t('Data:') }}</span
+                                      >{{ $t('Data') }}</span
                                     >
                                     <code
                                       class="rounded bg-white px-2 py-1 font-mono text-sm dark:bg-gray-900"
@@ -1547,7 +1618,7 @@ const mainDivPaddingStyle = computed(() => {
                                   <div v-if="frameTextsFromCsv[previewRowIndex]">
                                     <span
                                       class="text-xs font-medium text-gray-500 dark:text-gray-400"
-                                      >{{ $t('Frame text:') }}</span
+                                      >{{ $t('Frame text') }}</span
                                     >
                                     <code
                                       class="rounded bg-white px-2 py-1 font-mono text-sm dark:bg-gray-900"
@@ -1558,7 +1629,7 @@ const mainDivPaddingStyle = computed(() => {
                                   <div v-if="fileNamesFromCsv[previewRowIndex]">
                                     <span
                                       class="text-xs font-medium text-gray-500 dark:text-gray-400"
-                                      >{{ $t('File name:') }}</span
+                                      >{{ $t('File name') }}</span
                                     >
                                     <code
                                       class="rounded bg-white px-2 py-1 font-mono text-sm dark:bg-gray-900"
@@ -1762,7 +1833,7 @@ const mainDivPaddingStyle = computed(() => {
                 id="dots-squares-settings"
                 class="mb-4 flex w-full flex-col flex-wrap gap-6 md:flex-row"
               >
-                <fieldset class="flex-1" role="radio" tabindex="0">
+                <fieldset class="flex-1">
                   <legend>{{ t('Dots type') }}</legend>
                   <div
                     class="radio"
@@ -1785,7 +1856,7 @@ const mainDivPaddingStyle = computed(() => {
                     <label :for="'dotsOptionsType-' + type">{{ t(type) }}</label>
                   </div>
                 </fieldset>
-                <fieldset class="flex-1" role="radio" tabindex="0">
+                <fieldset class="flex-1">
                   <legend>{{ t('Corners Square type') }}</legend>
                   <div class="radio" v-for="type in ['dot', 'square', 'extra-rounded']" :key="type">
                     <input
@@ -1797,7 +1868,7 @@ const mainDivPaddingStyle = computed(() => {
                     <label :for="'cornersSquareOptionsType-' + type">{{ t(type) }}</label>
                   </div>
                 </fieldset>
-                <fieldset class="flex-1" role="radio" tabindex="0">
+                <fieldset class="flex-1">
                   <legend>{{ t('Corners Dot type') }}</legend>
                   <div class="radio" v-for="type in ['dot', 'square']" :key="type">
                     <input
@@ -1809,7 +1880,7 @@ const mainDivPaddingStyle = computed(() => {
                     <label :for="'cornersDotOptionsType-' + type">{{ t(type) }}</label>
                   </div>
                 </fieldset>
-                <fieldset class="flex-1" role="radio" tabindex="0">
+                <fieldset class="flex-1">
                   <div class="flex flex-row items-center gap-2">
                     <legend>{{ t('Error correction level') }}</legend>
                     <a
@@ -1860,7 +1931,7 @@ const mainDivPaddingStyle = computed(() => {
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-    </div>
+    </section>
   </div>
 
   <DataTemplatesModal
